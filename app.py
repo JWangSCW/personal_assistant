@@ -6,7 +6,4 @@ app = FastAPI()
 
 @app.get("/plan-trip")
 def plan_trip(city: str):
-
-    result = travel_agent(city)
-
-    return result
+    return travel_agent(city)

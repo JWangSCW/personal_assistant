@@ -5,3 +5,4 @@ langgraph
 redis
 requests
 pydantic
+python-dotenv
