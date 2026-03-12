@@ -1,6 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
+from knowledge import travel_knowledge
 
 load_dotenv()
 
@@ -10,24 +11,28 @@ SCW_API_URL = "https://api.scaleway.ai/v1/chat/completions"
 
 
 def format_itinerary_with_llm(city: str, itinerary: dict) -> str:
+
     if not SCW_SECRET_KEY:
-        raise ValueError("SCW_SECRET_KEY is missing. Please set it in your .env file.")
+        raise ValueError("SCW_SECRET_KEY missing in .env")
+
+    knowledge = travel_knowledge.get(city.lower(), "")
 
     prompt = f"""
 You are a helpful travel assistant.
 
-Write a friendly 3-day travel guide for {city}.
-The audience is a couple who loves food and history.
+City knowledge:
+{knowledge}
 
-Use the itinerary below:
+Trip itinerary:
 {itinerary}
 
+Write a friendly 3-day travel guide.
+
 Requirements:
-- Keep it concise but natural
-- Organize by Day 1, Day 2, Day 3
-- Explain why each day is interesting
-- Mention food and cultural highlights
-- End with one practical travel tip
+- Organize by Day 1 / Day 2 / Day 3
+- Explain why each place is interesting
+- Mention local food highlights
+- End with one travel tip
 """
 
     payload = {
@@ -35,7 +40,7 @@ Requirements:
         "messages": [
             {
                 "role": "system",
-                "content": "You are a helpful and concise travel planner."
+                "content": "You are a concise and friendly travel planner."
             },
             {
                 "role": "user",
@@ -56,7 +61,9 @@ Requirements:
         json=payload,
         timeout=60
     )
+
     response.raise_for_status()
 
     data = response.json()
+
     return data["choices"][0]["message"]["content"]

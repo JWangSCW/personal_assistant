@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_264efa688cd8f2af1ab9d463ebe8339d {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_264efa688cd8f2af1ab9d463ebe8339d" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_264efa688cd8f2af1ab9d463ebe8339d = L.map(
+                "map_264efa688cd8f2af1ab9d463ebe8339d",
+                {
+                    center: [41.9, 12.49],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 13,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_f0532526eab90ca40b4f17b7e53516cb = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_f0532526eab90ca40b4f17b7e53516cb.addTo(map_264efa688cd8f2af1ab9d463ebe8339d);
+        
+    
+            var marker_02c2c9ab2ac5191480f6cc5e6d620c5a = L.marker(
+                [41.8902, 12.4922],
+                {
+}
+            ).addTo(map_264efa688cd8f2af1ab9d463ebe8339d);
+        
+    
+        var popup_9742b29c440e611e35c4293732122a90 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_38f8e685f59cb2d07802b41b62ee8bbb = $(`<div id="html_38f8e685f59cb2d07802b41b62ee8bbb" style="width: 100.0%; height: 100.0%;">Day 1: Colosseum</div>`)[0];
+                popup_9742b29c440e611e35c4293732122a90.setContent(html_38f8e685f59cb2d07802b41b62ee8bbb);
+            
+        
+
+        marker_02c2c9ab2ac5191480f6cc5e6d620c5a.bindPopup(popup_9742b29c440e611e35c4293732122a90)
+        ;
+
+        
+    
+    
+            var marker_b93ac6bff7acca342d002b08e6be00d9 = L.marker(
+                [41.8925, 12.4853],
+                {
+}
+            ).addTo(map_264efa688cd8f2af1ab9d463ebe8339d);
+        
+    
+        var popup_65bb43041920664e27f22943476a7b96 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_b43eb125fabaac2400fdebe227662944 = $(`<div id="html_b43eb125fabaac2400fdebe227662944" style="width: 100.0%; height: 100.0%;">Day 1: Roman Forum</div>`)[0];
+                popup_65bb43041920664e27f22943476a7b96.setContent(html_b43eb125fabaac2400fdebe227662944);
+            
+        
+
+        marker_b93ac6bff7acca342d002b08e6be00d9.bindPopup(popup_65bb43041920664e27f22943476a7b96)
+        ;
+
+        
+    
+    
+            var marker_026831c990091ab89ccabe97f9c617f3 = L.marker(
+                [41.8986, 12.4769],
+                {
+}
+            ).addTo(map_264efa688cd8f2af1ab9d463ebe8339d);
+        
+    
+        var popup_fac8d7ad63a1531b2a205b6614e99a60 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_437e6de4b869161b6c5f541fe529df69 = $(`<div id="html_437e6de4b869161b6c5f541fe529df69" style="width: 100.0%; height: 100.0%;">Day 2: Pantheon</div>`)[0];
+                popup_fac8d7ad63a1531b2a205b6614e99a60.setContent(html_437e6de4b869161b6c5f541fe529df69);
+            
+        
+
+        marker_026831c990091ab89ccabe97f9c617f3.bindPopup(popup_fac8d7ad63a1531b2a205b6614e99a60)
+        ;
+
+        
+    
+    
+            var marker_f6838e9d0f5b9a1844ece9953fa9a25a = L.marker(
+                [41.9009, 12.4833],
+                {
+}
+            ).addTo(map_264efa688cd8f2af1ab9d463ebe8339d);
+        
+    
+        var popup_2bfacac625064b330df5a3d82bcd7a7f = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_923f6aaec2ea2c25bc8780cdc078c989 = $(`<div id="html_923f6aaec2ea2c25bc8780cdc078c989" style="width: 100.0%; height: 100.0%;">Day 2: Trevi Fountain</div>`)[0];
+                popup_2bfacac625064b330df5a3d82bcd7a7f.setContent(html_923f6aaec2ea2c25bc8780cdc078c989);
+            
+        
+
+        marker_f6838e9d0f5b9a1844ece9953fa9a25a.bindPopup(popup_2bfacac625064b330df5a3d82bcd7a7f)
+        ;
+
+        
+    
+    
+            var marker_fa78ce3aea750b12e19a06490d2acff3 = L.marker(
+                [41.9065, 12.4536],
+                {
+}
+            ).addTo(map_264efa688cd8f2af1ab9d463ebe8339d);
+        
+    
+        var popup_1d31cad7ac301d1cc29e86e7f1b78125 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_fdd1295c00d60a20450a0e1173c3cff5 = $(`<div id="html_fdd1295c00d60a20450a0e1173c3cff5" style="width: 100.0%; height: 100.0%;">Day 3: Vatican Museums</div>`)[0];
+                popup_1d31cad7ac301d1cc29e86e7f1b78125.setContent(html_fdd1295c00d60a20450a0e1173c3cff5);
+            
+        
+
+        marker_fa78ce3aea750b12e19a06490d2acff3.bindPopup(popup_1d31cad7ac301d1cc29e86e7f1b78125)
+        ;
+
+        
+    
+</script>
+</html>

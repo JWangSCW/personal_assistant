@@ -6,3 +6,5 @@ redis
 requests
 pydantic
 python-dotenv
+redis
+folium
