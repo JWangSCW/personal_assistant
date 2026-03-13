@@ -1,24 +1,13 @@
 from typing import Optional
 from fastapi import FastAPI, HTTPException
-from agent import travel_agent
-from parser import parse_user_request
+from agent import travel_agent_v2
 
 app = FastAPI()
 
 
 @app.get("/plan-trip")
-def plan_trip(query: Optional[str] = None, city: Optional[str] = None):
-    if query:
-        parsed_city = parse_user_request(query)
-        result = travel_agent(parsed_city)
-        result["parsed_city"] = parsed_city
-        result["user_query"] = query
-        return result
+def plan_trip(query: Optional[str] = None):
+    if not query:
+        raise HTTPException(status_code=400, detail="Please provide 'query'.")
 
-    if city:
-        result = travel_agent(city)
-        result["parsed_city"] = city
-        result["user_query"] = None
-        return result
-
-    raise HTTPException(status_code=400, detail="Please provide either 'query' or 'city'.")
+    return travel_agent_v2(query)

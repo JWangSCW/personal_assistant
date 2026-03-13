@@ -1,7 +1,8 @@
 import os
 import requests
 from dotenv import load_dotenv
-from knowledge import travel_knowledge
+from knowledge import load_city_knowledge
+from vector_store import search
 
 load_dotenv()
 
@@ -10,12 +11,37 @@ SCW_MODEL = os.getenv("SCW_MODEL", "llama-3.1-8b-instruct")
 SCW_API_URL = "https://api.scaleway.ai/v1/chat/completions"
 
 
-def format_itinerary_with_llm(city: str, itinerary: dict) -> str:
-
+def format_itinerary_with_llm(
+    city: str,
+    itinerary: dict,
+    duration_days: int,
+    interests: list[str] | None = None,
+    trip_style: str = "general",
+) -> str:
     if not SCW_SECRET_KEY:
         raise ValueError("SCW_SECRET_KEY missing in .env")
 
-    knowledge = travel_knowledge.get(city.lower(), "")
+    interests = interests or ["general"]
+    interests_str = ", ".join(interests)
+
+    # RAG first, fallback to local knowledge
+    knowledge_chunks = search(city, top_k=3)
+    knowledge = "\n".join(knowledge_chunks) if knowledge_chunks else load_city_knowledge(city)
+
+    if trip_style == "food":
+        style_instruction = """
+- Emphasize local cuisine, signature dishes, cafes, bakeries, wine bars, and culinary atmosphere
+- Keep the pace centered around eating and relaxing between food stops
+"""
+    elif trip_style == "chill":
+        style_instruction = """
+- Emphasize relaxed pace, scenic moments, parks, cafes, calm neighborhoods, and slow exploration
+- Avoid sounding rushed or overly packed
+"""
+    else:
+        style_instruction = """
+- Keep a balanced city-trip style with major highlights and practical pacing
+"""
 
     prompt = f"""
 You are a helpful travel assistant.
@@ -23,16 +49,27 @@ You are a helpful travel assistant.
 City knowledge:
 {knowledge}
 
-Trip itinerary:
+Trip context:
+- City: {city}
+- Duration: {duration_days} day(s)
+- Interests: {interests_str}
+- Trip style: {trip_style}
+
+Itinerary:
 {itinerary}
 
-Write a friendly 3-day travel guide.
+Write a friendly travel guide that matches EXACTLY the itinerary duration.
 
 Requirements:
-- Organize by Day 1 / Day 2 / Day 3
+- Write for exactly {duration_days} day(s), no more, no less
+- Organize the guide using the same day labels as the itinerary
+- Do not invent extra days
 - Explain why each place is interesting
-- Mention local food highlights
-- End with one travel tip
+- Mention food highlights when relevant
+- End with one practical travel tip
+
+Style requirements:
+{style_instruction}
 """
 
     payload = {
@@ -40,7 +77,7 @@ Requirements:
         "messages": [
             {
                 "role": "system",
-                "content": "You are a concise and friendly travel planner."
+                "content": "You are a concise and accurate travel planner."
             },
             {
                 "role": "user",
@@ -62,8 +99,20 @@ Requirements:
         timeout=60
     )
 
-    response.raise_for_status()
+    try:
+        data = response.json()
+    except Exception:
+        raise RuntimeError(
+            f"Scaleway API returned non-JSON response: "
+            f"status={response.status_code}, body={response.text}"
+        )
 
-    data = response.json()
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Scaleway API error: status={response.status_code}, body={data}"
+        )
 
-    return data["choices"][0]["message"]["content"]
+    if "choices" in data and data["choices"]:
+        return data["choices"][0]["message"]["content"]
+
+    raise RuntimeError(f"Unexpected Scaleway API response format: {data}")

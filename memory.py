@@ -33,14 +33,45 @@ if REDIS_HOST:
 def save_trip(city, itinerary):
     if not REDIS_AVAILABLE:
         return
-    redis_client.set(city, json.dumps(itinerary))
+
+    redis_client.set(
+        f"trip:{city.lower()}",
+        json.dumps(itinerary),
+        ex=3600
+    )
 
 
 def load_trip(city):
     if not REDIS_AVAILABLE:
         return None
 
-    data = redis_client.get(city)
+    data = redis_client.get(f"trip:{city.lower()}")
+
     if data:
         return json.loads(data)
+
     return None
+
+
+def cache_llm_response(key, value, ttl=3600):
+    if not REDIS_AVAILABLE:
+        return
+
+    redis_client.set(
+        f"llm:{key}",
+        json.dumps(value),
+        ex=ttl
+    )
+
+
+def get_llm_cache(key):
+    if not REDIS_AVAILABLE:
+        return None
+
+    data = redis_client.get(f"llm:{key}")
+
+    if data:
+        return json.loads(data)
+
+    return None
+    
