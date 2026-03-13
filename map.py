@@ -1,23 +1,38 @@
+import json
+from pathlib import Path
 import folium
 
-LOCATIONS = {
-    "Colosseum": (41.8902, 12.4922),
-    "Roman Forum": (41.8925, 12.4853),
-    "Pantheon": (41.8986, 12.4769),
-    "Trevi Fountain": (41.9009, 12.4833),
-    "Vatican Museums": (41.9065, 12.4536),
-}
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+
+
+def load_coordinates():
+    with open(DATA_DIR / "coordinates.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
 
 def generate_map(itinerary: dict) -> str:
-    travel_map = folium.Map(location=[41.9, 12.49], zoom_start=13)
+    locations = load_coordinates()
+    points = []
 
     for day, places in itinerary.items():
         for place in places:
-            if place in LOCATIONS:
-                folium.Marker(
-                    location=LOCATIONS[place],
-                    popup=f"{day}: {place}"
-                ).add_to(travel_map)
+            if place in locations:
+                lat, lon = locations[place]
+                points.append((day, place, lat, lon))
+
+    if points:
+        avg_lat = sum(p[2] for p in points) / len(points)
+        avg_lon = sum(p[3] for p in points) / len(points)
+        travel_map = folium.Map(location=[avg_lat, avg_lon], zoom_start=13)
+    else:
+        travel_map = folium.Map(location=[48.8566, 2.3522], zoom_start=12)
+
+    for day, place, lat, lon in points:
+        folium.Marker(
+            location=[lat, lon],
+            popup=f"{day}: {place}"
+        ).add_to(travel_map)
 
     output_file = "trip_map.html"
     travel_map.save(output_file)
