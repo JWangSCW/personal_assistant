@@ -156,6 +156,71 @@ resource "kubernetes_service" "travel_agent" {
       target_port = 8000
     }
 
+    type = "ClusterIP"
+  }
+}
+
+
+resource "kubernetes_deployment" "travel_ui" {
+  metadata {
+    name      = "travel-ui"
+    namespace = kubernetes_namespace.assistant.metadata[0].name
+    labels = {
+      app = "travel-ui"
+    }
+  }
+
+  spec {
+    replicas = 1
+
+    selector {
+      match_labels = {
+        app = "travel-ui"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "travel-ui"
+        }
+      }
+
+      spec {
+        container {
+          name  = "travel-ui"
+          image = "rg.fr-par.scw.cloud/travel-agent/personal-assistant-ui:latest"
+
+          port {
+            container_port = 8501
+          }
+
+          env {
+            name  = "API_URL"
+            value = "http://travel-agent/plan-trip"
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "travel_ui" {
+  metadata {
+    name      = "travel-ui"
+    namespace = kubernetes_namespace.assistant.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = "travel-ui"
+    }
+
+    port {
+      port        = 80
+      target_port = 8501
+    }
+
     type = "LoadBalancer"
   }
 }
