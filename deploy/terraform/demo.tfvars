@@ -1,0 +1,7 @@
+access_key  = "SCWXNVMDB4K8FT13Q4JJ"
+secret_key  = "c87f18df-2c0c-4d6c-aa31-141effce4948"
+project_id  = "8cfcea18-2aa9-4eb4-8754-4e32a034abec"
+region      = "fr-par"
+zone        = "fr-par-2"
+k8s_version = "1.35.1"
+node_type   = "PLAY2-NANO"

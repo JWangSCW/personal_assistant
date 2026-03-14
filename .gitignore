@@ -9,7 +9,15 @@ __pycache__
 .DS_Store
 .idea/
 .vscode/
-*.env
 *.egg-info/
 dist/
 *.html   
+venv/
+__pycache__/
+*.pyc
+.env
+trip_map.html
+.streamlit/
+*.tfstate
+*.tfstate.backup
+.terraform/

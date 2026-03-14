@@ -2,7 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from knowledge import load_city_knowledge
-from vector_store import search
+from llm.vector_store import search
 
 load_dotenv()
 

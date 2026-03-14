@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://127.0.0.1:8000/plan-trip"
+API_URL = "http://212.47.228.141/plan-trip"
 
 st.title("🌍 AI Travel Planner Agent v2")
 
@@ -12,7 +12,11 @@ query = st.text_input(
 
 if st.button("Plan my trip"):
     with st.spinner("Agent is planning your trip..."):
-        response = requests.get(API_URL, params={"query": query})
+        try:
+            response = requests.get(API_URL, params={"query": query}, timeout=120)
+        except Exception:
+            st.error("API server is not reachable. Start FastAPI first.")
+            st.stop()
 
         if response.status_code != 200:
             st.error(f"Agent failed: {response.text}")

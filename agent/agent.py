@@ -1,10 +1,12 @@
-from parser import parse_user_request
-from geocode import geocode_city
-from poi_provider import fetch_attractions, fetch_restaurants
-from weather import fetch_weather
-from planner import build_dynamic_itinerary
-from llm import format_itinerary_with_llm
-from map import generate_map
+from agent.parser import parse_user_request
+from providers.geocode import geocode_city
+from providers.poi_provider import fetch_attractions, fetch_restaurants
+from providers.weather import fetch_weather
+from agent.planner import build_dynamic_itinerary
+from llm.llm import format_itinerary_with_llm
+from utils.map import generate_map
+
+
 
 
 def travel_agent_v2(user_query: str):
