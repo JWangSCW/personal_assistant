@@ -1,7 +1,11 @@
 import streamlit as st
 import requests
+import os
+from dotenv import load_dotenv
 
-API_URL = "http://212.47.228.141/plan-trip"
+load_dotenv()
+
+API_URL = os.getenv("API_URL")
 
 st.title("🌍 AI Travel Planner Agent v2")
 
@@ -43,6 +47,7 @@ if st.button("Plan my trip"):
                 st.write(step)
 
             st.subheader("🗺 Travel Map")
-            with open(data["map"], "r") as f:
-                html_map = f.read()
-            st.components.v1.html(html_map, height=500)
+            if data.get("map_html"):
+                st.components.v1.html(data["map_html"], height=500)
+            else:
+                st.warning("Map is unavailable for this request.")

@@ -1,3 +1,4 @@
+import time
 import requests
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -60,21 +61,47 @@ def _normalize_overpass_elements(elements: list[dict]) -> list[dict]:
 
 
 def _run_overpass_query(query: str) -> list[dict]:
-    response = requests.post(
-        OVERPASS_URL,
-        data=query.encode("utf-8"),
-        timeout=60,
-        headers={"User-Agent": "travel-agent-demo/1.0"},
-    )
+    headers = {"User-Agent": "travel-agent-demo/1.0"}
+    backoffs = [1, 3, 5]
 
-    if response.status_code != 200:
-        raise RuntimeError(
-            f"Overpass API error: status={response.status_code}, body={response.text[:500]}"
-        )
+    for attempt, wait_s in enumerate(backoffs, start=1):
+        try:
+            response = requests.post(
+                OVERPASS_URL,
+                data=query.encode("utf-8"),
+                timeout=60,
+                headers=headers,
+            )
 
-    data = response.json()
-    elements = data.get("elements", [])
-    return _normalize_overpass_elements(elements)
+            if response.status_code == 200:
+                data = response.json()
+                elements = data.get("elements", [])
+                return _normalize_overpass_elements(elements)
+
+            if response.status_code in (429, 504):
+                print(
+                    f"Overpass transient error on attempt {attempt}: "
+                    f"status={response.status_code}, body={response.text[:300]}"
+                )
+                time.sleep(wait_s)
+                continue
+
+            print(
+                f"Overpass non-retryable error: "
+                f"status={response.status_code}, body={response.text[:300]}"
+            )
+            return []
+
+        except requests.RequestException as e:
+            print(f"Overpass request exception on attempt {attempt}: {e}")
+            time.sleep(wait_s)
+            continue
+        except ValueError as e:
+            print(f"Overpass JSON decode error on attempt {attempt}: {e}")
+            return []
+
+    print("Overpass query failed after retries, returning empty POI list.")
+    return []
 
 
 def score_poi(poi: dict) -> int:
@@ -105,7 +132,7 @@ def score_poi(poi: dict) -> int:
     return score
 
 
-def _build_attractions_query(lat: float, lon: float, radius_m: int = 6000) -> str:
+def _build_attractions_query(lat: float, lon: float, radius_m: int = 3000) -> str:
     return f"""
 [out:json][timeout:25];
 (
@@ -122,7 +149,7 @@ out center;
 """
 
 
-def _build_restaurants_query(lat: float, lon: float, interests: list[str], radius_m: int = 5000) -> str:
+def _build_restaurants_query(lat: float, lon: float, interests: list[str], radius_m: int = 2500) -> str:
     interests_lower = [x.lower() for x in interests]
 
     parts = [

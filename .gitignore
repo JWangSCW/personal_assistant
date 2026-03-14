@@ -21,3 +21,4 @@ trip_map.html
 *.tfstate
 *.tfstate.backup
 .terraform/
+push_image.sh
