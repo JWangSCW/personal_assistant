@@ -1,59 +1,76 @@
 # AI Travel Agent (LangGraph + Scaleway)
 
-An AI-powered travel planning agent capable of generating customized trip itineraries using LLM reasoning, geospatial data, and interactive maps.
+An AI-powered travel planning agent capable of generating **personalized
+travel itineraries** using LLM reasoning, geospatial data, and
+interactive maps.
 
-The system combines:
+The system combines **AI agents, vector search, real-world location
+data, and interactive visualization** to dynamically build travel plans
+based on user intent.
 
-- LangGraph agents
-- Scaleway Generative APIs (LLM + Embeddings)
-- OpenStreetMap POI search
-- Redis memory
-- Streamlit UI
-- FastAPI backend
+Example prompt:
 
-This project demonstrates how to build a **production-style AI agent architecture** capable of planning trips dynamically based on user intent.
+    Plan a 2-day romantic trip in Paris with museums and wine bars
 
-Example query:
-```
-Plan a 2-day romantic trip in Paris with museums and wine bars
-```
+The agent will automatically:
 
----
+-   understand the request
+-   discover points of interest
+-   generate an itinerary
+-   create an interactive travel map
 
-# Architecture
+------------------------------------------------------------------------
 
-The system is designed as a modular AI agent architecture.
+# Demo Preview
 
-Components include:
+The AI agent can generate a complete travel plan including:
 
-- UI
-- API
-- Agent orchestration
-- Tool providers
-- Memory
-- Vector search
-- LLM
+-   itinerary planning
+-   attractions and restaurants
+-   geospatial map visualization
+-   contextual travel recommendations
 
-## Current Architecture
+Example output:
 
-```mermaid
+**Day 1** - Louvre Museum - Seine river walk - Wine bar in Le Marais
+
+**Day 2** - Montmartre exploration - Musée d'Orsay - Romantic dinner
+near Saint-Germain
+
+All locations are automatically displayed on an interactive map.
+
+------------------------------------------------------------------------
+
+# Architecture Overview
+
+This project demonstrates a **production-style AI agent architecture**.
+
+The system integrates:
+
+-   LLM reasoning
+-   agent orchestration
+-   real-world geospatial APIs
+-   vector search
+-   persistent memory
+
+``` mermaid
 flowchart TD
 
     USER[User Query]
 
-    USER --> UI[Streamlit UI<br>Current: Local]
+    USER --> UI[Streamlit UI]
 
-    UI --> API[FastAPI API<br>Current: Local]
+    UI --> API[FastAPI Backend]
 
-    API --> AGENT[LangGraph Agent<br>Current: Local]
+    API --> AGENT[LangGraph Agent]
 
     AGENT --> PARSER[LLM Query Parser<br>Scaleway Generative API]
 
-    AGENT --> GEO[Geocoding Provider<br>Nominatim / OpenStreetMap]
+    AGENT --> GEO[Geocoding<br>Nominatim / OpenStreetMap]
 
-    AGENT --> POI[POI Provider<br>Overpass API]
+    AGENT --> POI[POI Search<br>Overpass API]
 
-    AGENT --> VEC[Vector Store<br>Scaleway Embeddings API]
+    AGENT --> VEC[Vector Search<br>Scaleway Embeddings API]
 
     AGENT --> MEM[Trip Memory<br>Redis]
 
@@ -64,113 +81,170 @@ flowchart TD
     MAP --> UI
 ```
 
-## Component Hosting (Current)
-Component	Technology	Hosting
-UI	Streamlit	Local
-API	FastAPI	Local
-Agent	LangGraph	Local
-LLM	Scaleway Generative API	Scaleway
-Embeddings	Scaleway Embeddings API	Scaleway
-POI search	OpenStreetMap Overpass API	External
-Geocoding	Nominatim	External
-Memory	Redis	Local (optional Scaleway Managed Redis)
-Map rendering	Leaflet	Browser
+------------------------------------------------------------------------
 
-## Example Query Flow
-Example Query Flow
-Plan a 2-day romantic trip in Paris with museums and wine bars
+# Component Hosting
+
+  Component       Technology                   Hosting
+  --------------- ---------------------------- -----------------------
+  UI              Streamlit                    Local
+  API             FastAPI                      Local
+  Agent           LangGraph                    Local
+  LLM             Scaleway Generative API      Scaleway
+  Embeddings      Scaleway Embeddings API      Scaleway
+  POI search      OpenStreetMap Overpass API   External
+  Geocoding       Nominatim                    External
+  Memory          Redis                        Local / Managed Redis
+  Map rendering   Leaflet                      Browser
+
+------------------------------------------------------------------------
+
+# Example Query Execution
+
+Example query:
+
+    Plan a 2-day romantic trip in Paris with museums and wine bars
+
 Execution flow:
 
-1. UI sends query to FastAPI
-2. Agent parses intent (city, duration, interests)
-3. Geocoder finds city coordinates
-4. POI provider retrieves attractions and restaurants
-5. Agent builds itinerary
-6. Vector search retrieves knowledge (RAG)
-7. Scaleway LLM generates travel guide
-8. Map generator renders an interactive map
-9. UI displays itinerary and map
+1.  User sends query via Streamlit UI
+2.  FastAPI forwards the request to the LangGraph agent
+3.  The agent parses the query using an LLM
+4.  Geocoding service retrieves city coordinates
+5.  OpenStreetMap APIs discover relevant attractions and restaurants
+6.  The agent builds a structured itinerary
+7.  Vector search retrieves contextual knowledge (RAG)
+8.  Scaleway LLM generates the travel guide
+9.  A map is generated with Leaflet
+10. UI renders the itinerary and map
 
-Features
-AI Trip Planning
+------------------------------------------------------------------------
+
+# Features
+
+## AI Trip Planning
+
 The agent generates itineraries based on:
-duration
-travel style
-interests
-location
+
+-   trip duration
+-   travel style
+-   interests
+-   destination
+
 Example prompts:
-Plan a 1-day food trip in Rome
-Plan a 2-day romantic trip in Paris
-Plan a museum weekend in Madrid
-Plan a chill trip in Barcelona
 
-Dynamic POI Discovery
+    Plan a 1-day food trip in Rome
+    Plan a museum weekend in Madrid
+    Plan a chill trip in Barcelona
 
-Attractions and restaurants are discovered dynamically using OpenStreetMap.
+------------------------------------------------------------------------
+
+## Dynamic POI Discovery
+
+Attractions and restaurants are discovered dynamically using
+**OpenStreetMap APIs**.
+
 Supported places include:
-museums
-historical sites
-parks
-restaurants
-cafes
-bakeries
-wine bars
-nightlife venues
 
-RAG Knowledge Integration
+-   museums
+-   historical sites
+-   parks
+-   restaurants
+-   cafes
+-   bakeries
+-   wine bars
+-   nightlife venues
 
-The agent retrieves additional contextual knowledge using vector search.
-Example knowledge files:
-knowledge/paris.txt
-knowledge/rome.txt
-knowledge/barcelona.txt
-Embeddings are generated using Scaleway Embeddings API.
+------------------------------------------------------------------------
 
-Interactive Map Generation
+## RAG Knowledge Integration
 
-Each itinerary includes a generated map showing:
-attractions
-restaurants
-itinerary points
-Maps are rendered with Leaflet.
+The agent enriches the itinerary using **vector search**.
 
-Trip Memory
+Knowledge examples:
 
-Trips can optionally be stored in Redis.
+    knowledge/paris.txt
+    knowledge/rome.txt
+    knowledge/barcelona.txt
+
+Embeddings are generated using **Scaleway Embeddings API**.
+
+------------------------------------------------------------------------
+
+## Interactive Map Generation
+
+Each itinerary includes an automatically generated map showing:
+
+-   attractions
+-   restaurants
+-   itinerary points
+
+Maps are rendered using **Leaflet.js**.
+
+------------------------------------------------------------------------
+
+## Trip Memory
+
+Trips can optionally be stored using Redis.
+
 Example:
+
+``` python
 save_trip("paris", itinerary)
 load_trip("paris")
-This enables conversational improvements later.
+```
 
-Local Setup
+This enables future conversational improvements.
+
+------------------------------------------------------------------------
+
+# Local Setup
 
 Clone the repository:
+
+``` bash
 git clone https://github.com/JWangSCW/personal_assistant.git
 cd personal_assistant
+```
 
-Create virtual environment:
+Create a virtual environment:
+
+``` bash
 python -m venv venv
 source venv/bin/activate
+```
 
 Install dependencies:
+
+``` bash
 pip install -r requirements.txt
+```
 
-Environment Variables
-Create .env:
-SCW_SECRET_KEY=your_scaleway_secret_key
-SCW_MODEL=llama-3.1-8b-instruct
-SCW_EMBEDDING_MODEL=bge-multilingual-gemma2
+------------------------------------------------------------------------
 
-REDIS_HOST=
-REDIS_PORT=6379
-REDIS_PASSWORD=
-REDIS_DB=0
+# Environment Variables
 
-Redis is optional.
-If not configured, memory features will be disabled automatically.
+Create a `.env` file:
 
-Scaleway Deployment (Target Architecture)
-This demo can be deployed entirely on Scaleway.
+    SCW_SECRET_KEY=your_scaleway_secret_key
+    SCW_MODEL=llama-3.1-8b-instruct
+    SCW_EMBEDDING_MODEL=bge-multilingual-gemma2
+
+    REDIS_HOST=
+    REDIS_PORT=6379
+    REDIS_PASSWORD=
+    REDIS_DB=0
+
+Redis is optional. If not configured, memory features will be disabled
+automatically.
+
+------------------------------------------------------------------------
+
+# Target Deployment on Scaleway
+
+The entire system can be deployed on **Scaleway cloud infrastructure**.
+
+``` mermaid
 flowchart TD
 
     USER[Internet User]
@@ -188,20 +262,46 @@ flowchart TD
     API --> GENAI[Scaleway Generative API]
 
     API --> OBJ[Object Storage]
+```
 
+------------------------------------------------------------------------
 
-Future Improvements
+# Future Improvements
 
 Planned improvements:
 
-route optimization
+-   route optimization
+-   weather-aware trip planning
+-   budget estimation
+-   conversational itinerary editing
+-   persistent vector database
+-   Kubernetes deployment automation
 
-weather-aware trip planning
+------------------------------------------------------------------------
 
-budget estimation
+# Tech Stack
 
-conversational itinerary editing
+Python\
+LangGraph\
+FastAPI\
+Streamlit\
+Redis\
+OpenStreetMap APIs\
+Leaflet\
+Scaleway Generative APIs
 
-persistent vector database
+------------------------------------------------------------------------
 
-Kubernetes deployment automation
+# Purpose of this Project
+
+This project demonstrates how to build **production-ready AI agents**
+combining:
+
+-   LLM reasoning
+-   geospatial APIs
+-   vector search
+-   memory
+-   cloud-native deployment
+
+It also showcases how **Scaleway Generative APIs** can power real-world
+AI applications.
