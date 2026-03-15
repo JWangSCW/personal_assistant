@@ -4,9 +4,16 @@ An AI-powered travel planning agent capable of generating **personalized
 travel itineraries** using LLM reasoning, geospatial data, and
 interactive maps.
 
-The system combines **AI agents, vector search, real-world location
-data, and interactive visualization** to dynamically build travel plans
-based on user intent.
+This project demonstrates how to build a **production‑style AI agent
+architecture** using:
+
+-   LangGraph agents
+-   Scaleway Generative APIs (LLM + Embeddings)
+-   OpenStreetMap geospatial data
+-   Redis memory
+-   Streamlit UI
+-   FastAPI backend
+-   Kubernetes deployment on **Scaleway Kapsule**
 
 Example prompt:
 
@@ -15,64 +22,59 @@ Example prompt:
 The agent will automatically:
 
 -   understand the request
--   discover points of interest
--   generate an itinerary
--   create an interactive travel map
+-   discover relevant attractions
+-   build a day‑by‑day itinerary
+-   generate an interactive map
 
 ------------------------------------------------------------------------
 
-# Demo Preview
+# Demo Capabilities
 
-The AI agent can generate a complete travel plan including:
+The AI agent dynamically generates travel plans including:
 
 -   itinerary planning
--   attractions and restaurants
--   geospatial map visualization
+-   discovery of attractions and restaurants
 -   contextual travel recommendations
+-   geospatial visualization on an interactive map
 
 Example output:
 
-**Day 1** - Louvre Museum - Seine river walk - Wine bar in Le Marais
+**Day 1** - Louvre Museum - Walk along the Seine - Wine bar in Le Marais
 
-**Day 2** - Montmartre exploration - Musée d'Orsay - Romantic dinner
-near Saint-Germain
+**Day 2** - Montmartre exploration - Musée d'Orsay - Dinner near
+Saint‑Germain
 
-All locations are automatically displayed on an interactive map.
+All locations are displayed automatically on a map.
 
 ------------------------------------------------------------------------
 
-# Architecture Overview
+# System Architecture
 
-This project demonstrates a **production-style AI agent architecture**.
-
-The system integrates:
-
--   LLM reasoning
--   agent orchestration
--   real-world geospatial APIs
--   vector search
--   persistent memory
+The application follows a **cloud‑native AI agent architecture**
+deployed on **Scaleway Kubernetes (Kapsule)**.
 
 ``` mermaid
 flowchart TD
 
-    USER[User Query]
+    USER[Internet User]
 
-    USER --> UI[Streamlit UI]
+    USER --> LB[Scaleway Load Balancer]
 
-    UI --> API[FastAPI Backend]
+    LB --> UI[Streamlit UI Pod<br>Kubernetes]
+
+    UI --> API[FastAPI Backend Pod<br>Kubernetes]
 
     API --> AGENT[LangGraph Agent]
 
     AGENT --> PARSER[LLM Query Parser<br>Scaleway Generative API]
 
-    AGENT --> GEO[Geocoding<br>Nominatim / OpenStreetMap]
+    AGENT --> GEO[Geocoding<br>Nominatim]
 
-    AGENT --> POI[POI Search<br>Overpass API]
+    AGENT --> POI[POI Search<br>OpenStreetMap Overpass]
 
     AGENT --> VEC[Vector Search<br>Scaleway Embeddings API]
 
-    AGENT --> MEM[Trip Memory<br>Redis]
+    AGENT --> MEM[Redis Memory]
 
     AGENT --> LLM[Travel Guide Generator<br>Scaleway Generative API]
 
@@ -83,23 +85,44 @@ flowchart TD
 
 ------------------------------------------------------------------------
 
-# Component Hosting
+# Deployment Architecture
 
-  Component       Technology                   Hosting
-  --------------- ---------------------------- -----------------------
-  UI              Streamlit                    Local
-  API             FastAPI                      Local
-  Agent           LangGraph                    Local
-  LLM             Scaleway Generative API      Scaleway
-  Embeddings      Scaleway Embeddings API      Scaleway
-  POI search      OpenStreetMap Overpass API   External
-  Geocoding       Nominatim                    External
-  Memory          Redis                        Local / Managed Redis
-  Map rendering   Leaflet                      Browser
+The application is deployed using **Scaleway Kapsule Kubernetes**.
+
+Key design elements:
+
+-   **Streamlit UI** deployed as a Kubernetes pod
+-   **FastAPI backend** deployed as a separate Kubernetes pod
+-   UI exposed through a **Scaleway Load Balancer**
+-   Docker images stored in **Scaleway Container Registry**
+-   AI inference provided by **Scaleway Generative APIs**
+
+This separation enables:
+
+-   independent scaling of UI and API
+-   containerized microservices
+-   easier CI/CD workflows
 
 ------------------------------------------------------------------------
 
-# Example Query Execution
+# Component Hosting
+
+  Component          Technology               Hosting
+  ------------------ ------------------------ -----------------------------
+  UI                 Streamlit                Scaleway Kapsule
+  API                FastAPI                  Scaleway Kapsule
+  Agent              LangGraph                Scaleway Kapsule
+  Container Images   Docker                   Scaleway Container Registry
+  LLM                Generative API           Scaleway Model Library
+  Embeddings         Embeddings API           Scaleway Model Library
+  POI Search         OpenStreetMap Overpass   External
+  Geocoding          Nominatim                External
+  Memory             Redis                    Local or Managed Redis
+  Map Rendering      Leaflet                  Browser
+
+------------------------------------------------------------------------
+
+# Request Flow
 
 Example query:
 
@@ -107,16 +130,18 @@ Example query:
 
 Execution flow:
 
-1.  User sends query via Streamlit UI
-2.  FastAPI forwards the request to the LangGraph agent
-3.  The agent parses the query using an LLM
-4.  Geocoding service retrieves city coordinates
-5.  OpenStreetMap APIs discover relevant attractions and restaurants
-6.  The agent builds a structured itinerary
-7.  Vector search retrieves contextual knowledge (RAG)
-8.  Scaleway LLM generates the travel guide
-9.  A map is generated with Leaflet
-10. UI renders the itinerary and map
+1.  User accesses the application via the **Load Balancer**
+2.  Request reaches the **Streamlit UI pod**
+3.  UI sends the request to the **FastAPI backend**
+4.  FastAPI triggers the **LangGraph agent**
+5.  The agent orchestrates multiple tools:
+    -   geocoding
+    -   POI discovery
+    -   vector retrieval (RAG)
+    -   LLM reasoning
+6.  A travel itinerary is generated
+7.  Map data is produced using Leaflet
+8.  Results are returned to the UI
 
 ------------------------------------------------------------------------
 
@@ -124,12 +149,12 @@ Execution flow:
 
 ## AI Trip Planning
 
-The agent generates itineraries based on:
+The system generates itineraries based on:
 
+-   destination
 -   trip duration
 -   travel style
 -   interests
--   destination
 
 Example prompts:
 
@@ -141,13 +166,13 @@ Example prompts:
 
 ## Dynamic POI Discovery
 
-Attractions and restaurants are discovered dynamically using
-**OpenStreetMap APIs**.
+Points of interest are discovered dynamically using **OpenStreetMap
+APIs**.
 
 Supported places include:
 
 -   museums
--   historical sites
+-   historical landmarks
 -   parks
 -   restaurants
 -   cafes
@@ -159,9 +184,9 @@ Supported places include:
 
 ## RAG Knowledge Integration
 
-The agent enriches the itinerary using **vector search**.
+The agent can enrich itineraries using **vector search**.
 
-Knowledge examples:
+Example knowledge files:
 
     knowledge/paris.txt
     knowledge/rome.txt
@@ -173,11 +198,11 @@ Embeddings are generated using **Scaleway Embeddings API**.
 
 ## Interactive Map Generation
 
-Each itinerary includes an automatically generated map showing:
+Each itinerary automatically generates a map displaying:
 
 -   attractions
 -   restaurants
--   itinerary points
+-   itinerary locations
 
 Maps are rendered using **Leaflet.js**.
 
@@ -198,7 +223,7 @@ This enables future conversational improvements.
 
 ------------------------------------------------------------------------
 
-# Local Setup
+# Local Development
 
 Clone the repository:
 
@@ -235,47 +260,22 @@ Create a `.env` file:
     REDIS_PASSWORD=
     REDIS_DB=0
 
-Redis is optional. If not configured, memory features will be disabled
-automatically.
+Redis configuration is optional.
 
-------------------------------------------------------------------------
-
-# Target Deployment on Scaleway
-
-The entire system can be deployed on **Scaleway cloud infrastructure**.
-
-``` mermaid
-flowchart TD
-
-    USER[Internet User]
-
-    USER --> LB[Scaleway Load Balancer]
-
-    LB --> K8S[Kubernetes Kapsule]
-
-    K8S --> API[Travel Agent API]
-
-    K8S --> UI[Streamlit UI]
-
-    API --> REDIS[Managed Redis]
-
-    API --> GENAI[Scaleway Generative API]
-
-    API --> OBJ[Object Storage]
-```
+If not configured, memory features will be disabled automatically.
 
 ------------------------------------------------------------------------
 
 # Future Improvements
 
-Planned improvements:
+Planned enhancements:
 
 -   route optimization
--   weather-aware trip planning
--   budget estimation
+-   weather-aware travel planning
+-   travel budget estimation
 -   conversational itinerary editing
 -   persistent vector database
--   Kubernetes deployment automation
+-   automated Kubernetes deployment
 
 ------------------------------------------------------------------------
 
@@ -292,16 +292,16 @@ Scaleway Generative APIs
 
 ------------------------------------------------------------------------
 
-# Purpose of this Project
+# Project Goal
 
-This project demonstrates how to build **production-ready AI agents**
+This project demonstrates how to build **real-world AI agents**
 combining:
 
 -   LLM reasoning
--   geospatial APIs
--   vector search
--   memory
--   cloud-native deployment
+-   external tools and APIs
+-   vector search (RAG)
+-   conversational memory
+-   cloud-native infrastructure
 
-It also showcases how **Scaleway Generative APIs** can power real-world
+It also showcases how **Scaleway Generative APIs** can power practical
 AI applications.
