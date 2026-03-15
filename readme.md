@@ -50,17 +50,17 @@ flowchart TD
 
     API --> AGENT[LangGraph Agent]
 
-    AGENT --> GEO[Geocoding<br>Open‑Meteo Geocoding API]
+    AGENT --> GEO[Geocoding<br>Open-Meteo Geocoding API]
 
     AGENT --> POI[POI Discovery<br>Overpass API]
 
-    AGENT --> WEATHER[Weather Data<br>Open‑Meteo Forecast API]
+    AGENT --> WEATHER[Weather Data<br>Open-Meteo Forecast API]
 
     AGENT --> WIKI[City Summary<br>Wikipedia REST API]
 
     AGENT --> EMB[Embeddings<br>Scaleway Embeddings API]
 
-    AGENT --> MEM[Trip Memory<br>Redis (optional)]
+    AGENT --> MEM[Trip Memory<br>Redis optional]
 
     AGENT --> LLM[Travel Guide Generation<br>Scaleway Generative API]
 
