@@ -56,15 +56,13 @@ flowchart TD
 
     AGENT --> WEATHER[Weather Data<br>Open-Meteo Forecast API]
 
-    AGENT --> WIKI[City Summary<br>Wikipedia REST API]
+    AGENT --> WIKI[City Summary<br>Wikipedia API]
 
     AGENT --> EMB[Embeddings<br>Scaleway Embeddings API]
 
     AGENT --> MEM[Trip Memory<br>Redis optional]
 
-    AGENT --> LLM[Travel Guide Generation<br>Scaleway Generative API]
-
-    AGENT --> MAP[Interactive Map<br>Leaflet]
+    AGENT --> MAP[Map Generation<br>Folium]
 
     MAP --> UI
 ```
@@ -93,20 +91,20 @@ This architecture enables:
 
 # Component Hosting
 
-  Component          Technology                     Hosting
-  ------------------ ------------------------------ -----------------------------
-  UI                 Streamlit                      Scaleway Kapsule
-  API                FastAPI                        Scaleway Kapsule
-  Agent              LangGraph                      Scaleway Kapsule
-  Container Images   Docker                         Scaleway Container Registry
-  LLM                Scaleway Generative API        Scaleway Model Library
-  Embeddings         Scaleway Embeddings API        Scaleway Model Library
-  Geocoding          Open‑Meteo Geocoding API       External
-  POI Discovery      Overpass API (OpenStreetMap)   External
-  Weather            Open‑Meteo Forecast API        External
-  City Summary       Wikipedia REST API             External
-  Memory             Redis (optional)               Local or Managed Redis
-  Map Rendering      Leaflet                        Browser
+| Component        | Technology               | Hosting                     |
+| ---------------- | ------------------------ | --------------------------- |
+| UI               | Streamlit                | Kapsule Pod                 |
+| API              | FastAPI                  | Kapsule Pod                 |
+| Agent            | LangGraph                | Kapsule                     |
+| Container Images | Docker                   | Scaleway Container Registry |
+| LLM              | Scaleway Generative API  | Scaleway                    |
+| Embeddings       | Scaleway Embeddings API  | Scaleway                    |
+| Geocoding        | Open-Meteo Geocoding API | External                    |
+| POI Discovery    | Overpass API             | External                    |
+| Weather          | Open-Meteo Forecast API  | External                    |
+| City Summary     | Wikipedia API            | External                    |
+| Memory           | Redis optional           | Local / Managed             |
+| Map Generation   | Folium (Leaflet)         | Backend                     |
 
 ------------------------------------------------------------------------
 
@@ -138,7 +136,7 @@ The LangGraph agent orchestrates several tools defined in the codebase.
                                       travel itinerary
 
   `generate_map`                      Render itinerary locations using
-                                      Leaflet
+                                      Folium
   -----------------------------------------------------------------------
 
 ------------------------------------------------------------------------
