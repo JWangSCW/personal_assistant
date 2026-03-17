@@ -7,6 +7,8 @@ from providers.weather import fetch_weather
 from agent.planner import build_dynamic_itinerary
 from llm.llm import format_itinerary_with_llm
 from utils.map import generate_map_html
+from storage.memory import REDIS_AVAILABLE, redis_client
+from storage.memory import create_job, get_job, update_job
 
 app = FastAPI()
 
@@ -152,6 +154,32 @@ def travel_agent_v2(user_query: str):
 def health():
     return {"status": "ok"}
 
+@app.get("/redis-test")
+def redis_test():
+    if not REDIS_AVAILABLE:
+        return {"redis": "unavailable"}
+
+    redis_client.set("healthcheck", "ok", ex=60)
+    value = redis_client.get("healthcheck")
+
+    return {"redis": value}
+
+@app.post("/plan-trip")
+def plan_trip_async(query: str):
+    try:
+        job_id = create_job({"query": query})
+        return {"job_id": job_id, "status": "pending"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/jobs/{job_id}")
+def get_job_status(job_id: str):
+    job = get_job(job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return job
 
 @app.get("/plan-trip")
 def plan_trip(query: str):
