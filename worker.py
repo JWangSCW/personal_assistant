@@ -1,5 +1,5 @@
 import time
-from storage.memory import get_job, update_job, redis_client
+from storage.memory import get_job, update_job, redis_client, get_session_preferences
 from app import travel_agent_v2
 
 def find_pending_job():
@@ -20,13 +20,22 @@ def worker_loop():
             continue
 
         query = job["payload"]["query"]
-
-        update_job(job_id, status="running")
+        session_id = job["payload"].get("session_id", "anonymous")
+        preferences = get_session_preferences(session_id)
+        print(f"[worker] session_id={session_id}")
+        print(f"[worker] preferences={preferences}")
 
         try:
             update_job(job_id, status="running")
-            result = travel_agent_v2(query)
-            update_job(job_id, status="completed", result=result)
+            result = travel_agent_v2(query, session_preferences=preferences)
+            result["session_preferences"] = preferences
+
+            update_job(
+                job_id,
+                status="completed",
+                result=result,
+                session_id=session_id,
+            )
 
         except Exception as e:
             update_job(job_id, status="failed", error=str(e))

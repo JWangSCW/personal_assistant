@@ -38,55 +38,68 @@ def _deduplicate_items(items: list[dict]) -> list[dict]:
     return result
 
 
-def build_dynamic_itinerary(
+TRIP_STYLE_PROFILES = {
+    "food": {
+        "restaurant_keywords": ["restaurant", "cafe", "bakery", "bar", "pub", "food"],
+        "attraction_keywords": ["market", "street", "historic", "garden", "waterfront"],
+        "max_restaurants": 8,
+        "max_attractions": 4,
+    },
+    "chill": {
+        "restaurant_keywords": ["cafe", "bakery", "tea", "restaurant"],
+        "attraction_keywords": ["park", "garden", "viewpoint", "leisure", "river", "scenic"],
+        "max_restaurants": 4,
+        "max_attractions": 6,
+    },
+    "party": {
+        "restaurant_keywords": ["bar", "pub", "restaurant", "cafe"],
+        "attraction_keywords": ["nightclub", "club", "nightlife", "music", "entertainment"],
+        "max_restaurants": 6,
+        "max_attractions": 4,
+    },
+    "romantic": {
+        "restaurant_keywords": ["restaurant", "cafe", "wine", "bar"],
+        "attraction_keywords": ["viewpoint", "garden", "park", "scenic", "historic"],
+        "max_restaurants": 6,
+        "max_attractions": 4,
+    },
+    "family": {
+        "restaurant_keywords": ["restaurant", "cafe", "bakery"],
+        "attraction_keywords": ["park", "zoo", "museum", "garden", "playground", "family"],
+        "max_restaurants": 4,
+        "max_attractions": 6,
+    },
+    "culture": {
+        "restaurant_keywords": ["cafe", "restaurant"],
+        "attraction_keywords": ["museum", "historic", "monument", "art", "heritage", "architecture"],
+        "max_restaurants": 4,
+        "max_attractions": 6,
+    },
+    "general": {
+        "restaurant_keywords": ["restaurant", "cafe", "bakery"],
+        "attraction_keywords": ["attraction", "historic", "park", "museum"],
+        "max_restaurants": 5,
+        "max_attractions": 5,
+    },
+}
+
+
+def build_candidate_pool(
     attractions: list[dict],
     restaurants: list[dict],
-    duration_days: int,
     trip_style: str = "general",
 ) -> dict:
-    itinerary = {}
+    profile = TRIP_STYLE_PROFILES.get(trip_style, TRIP_STYLE_PROFILES["general"])
 
-    if trip_style == "food":
-        food_like = _pick_by_keywords(
-            restaurants,
-            ["restaurant", "cafe", "bakery", "bar", "pub"]
-        )
-        scenic_like = _pick_by_keywords(
-            attractions,
-            ["park", "viewpoint", "historic", "attraction", "museum"]
-        )
+    prioritized_restaurants = _deduplicate_items(
+        _pick_by_keywords(restaurants, profile["restaurant_keywords"]) + restaurants
+    )[: profile["max_restaurants"]]
 
-        pool = _deduplicate_items(food_like + scenic_like + restaurants + attractions)
-        stops_per_day = 4
+    prioritized_attractions = _deduplicate_items(
+        _pick_by_keywords(attractions, profile["attraction_keywords"]) + attractions
+    )[: profile["max_attractions"]]
 
-    elif trip_style == "chill":
-        chill_like = _pick_by_keywords(
-            attractions,
-            ["park", "garden", "viewpoint", "leisure", "river", "scenic"]
-        )
-        cafe_like = _pick_by_keywords(
-            restaurants,
-            ["cafe", "bakery", "bar", "restaurant"]
-        )
-
-        pool = _deduplicate_items(chill_like + cafe_like + attractions + restaurants)
-        stops_per_day = 3
-
-    else:
-        pool = _deduplicate_items(attractions + restaurants)
-        stops_per_day = 4
-
-    index = 0
-
-    for day in range(1, duration_days + 1):
-        day_items = []
-
-        for _ in range(stops_per_day):
-            if index < len(pool):
-                day_items.append(pool[index])
-                index += 1
-
-        if day_items:
-            itinerary[f"Day {day}"] = day_items
-
-    return itinerary
+    return {
+        "restaurants": prioritized_restaurants,
+        "attractions": prioritized_attractions,
+    }

@@ -141,3 +141,48 @@ def update_job(job_id: str, **fields):
     redis_client.set(job_key, json.dumps(job_data), ex=3600)
     return job_data
 
+SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "604800"))  # 7 days
+
+
+def _session_preferences_key(session_id: str) -> str:
+    return f"session:{session_id}:preferences"
+
+
+def get_session_preferences(session_id: str) -> dict:
+    if not REDIS_AVAILABLE:
+        return {}
+
+    data = redis_client.get(_session_preferences_key(session_id))
+    if not data:
+        return {}
+
+    try:
+        return json.loads(data)
+    except json.JSONDecodeError:
+        return {}
+
+
+def save_session_preferences(session_id: str, preferences: dict):
+    if not REDIS_AVAILABLE:
+        raise RuntimeError("Redis unavailable")
+
+    redis_client.set(
+        _session_preferences_key(session_id),
+        json.dumps(preferences),
+        ex=SESSION_TTL_SECONDS
+    )
+
+
+def merge_session_preferences(session_id: str, new_preferences: dict) -> dict:
+    if not REDIS_AVAILABLE:
+        raise RuntimeError("Redis unavailable")
+
+    current = get_session_preferences(session_id)
+    merged = {**current, **new_preferences}
+
+    redis_client.set(
+        _session_preferences_key(session_id),
+        json.dumps(merged),
+        ex=SESSION_TTL_SECONDS
+    )
+    return merged

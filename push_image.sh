@@ -15,3 +15,8 @@ docker buildx build --platform linux/amd64 -t rg.fr-par.scw.cloud/travel-agent/p
 kubectl rollout restart deployment/travel-agent -n assistant
 kubectl rollout status deployment/travel-agent -n assistant
 kubectl logs deployment/travel-agent -n assistant --tail=100
+
+docker buildx build --platform linux/amd64 -t rg.fr-par.scw.cloud/travel-agent/personal-assistant:latest -f deploy/docker/Dockerfile . --push                                                              
+kubectl rollout restart deployment/travel-worker -n assistant
+kubectl rollout status deployment/travel-worker -n assistant
+kubectl logs deployment/travel-worker -n assistant --tail=100
