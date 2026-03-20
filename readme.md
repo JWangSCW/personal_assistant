@@ -6,33 +6,41 @@ Async AI agent system for travel planning, deployed on Scaleway.
 
 ## What it does
 
-* Generate a day-by-day travel itinerary (LLM)
-* Enrich locations with POIs (Overpass API)
-* Add weather context (Open-Meteo)
-* Render an interactive map (Folium)
-* Support incremental refinement ("make it more romantic", etc.)
+Given a natural language request:
+
+```text
+Plan a 2-day food trip in Paris
+```
+
+The system:
+
+- parses intent (destination, duration, preferences)
+- generates a structured itinerary (LLM)
+- enriches places with coordinates (geocoding)
+- renders an interactive map
+- optionally generates a travel guide
 
 Outputs:
-
-* structured itinerary
-* interactive map
-* optional travel guide
+- day-by-day itinerary
+- map (Folium)
+- optional narrative guide
 
 ---
 
 ## Overview
 
-System built around **async job execution** and **agent orchestration**.
+System built as an **async agent pipeline**.
 
 Core components:
+- FastAPI (job submission + polling)
+- Redis (state + queue)
+- Worker (execution runtime)
+- Scaleway Generative APIs (LLM)
+- Streamlit (UI)
 
-* FastAPI (API layer)
-* Redis (state + queue)
-* Worker (execution runtime)
-* Scaleway Generative APIs (LLM)
-* Streamlit (UI)
-
-Frontend never blocks. Requests are processed asynchronously.
+Execution is non-blocking:
+- API returns immediately
+- UI polls job status
 
 ---
 
@@ -49,30 +57,43 @@ flowchart LR
 
 Flow:
 
-1. Client submits request
-2. API creates job_id
-3. Job stored in Redis
-4. Worker executes pipeline
-5. Result stored in Redis
-6. Client polls status
+1. client submits request  
+2. API creates job_id  
+3. job stored in Redis  
+4. worker executes pipeline  
+5. result stored in Redis  
+6. client polls status  
 
 ---
 
 ## Agent Pipeline
 
 ```
-parse (intent extraction)
-→ plan (LLM itinerary)
-→ enrich (POI + geo)
-→ map (render)
-→ guide (optional)
+parse → plan → enrich → map → guide
 ```
+
+Details:
+
+- **parse**  
+  extract structured intent (city, days, preferences)
+
+- **plan**  
+  generate itinerary (LLM)
+
+- **enrich**  
+  geocode + attach coordinates
+
+- **map**  
+  generate Folium map
+
+- **guide (optional)**  
+  generate textual recommendations
 
 Notes:
 
-* LLM used for planning only
-* enrichment handled outside LLM
-* pipeline partially deterministic
+- LLM only used for planning  
+- enrichment handled outside LLM  
+- pipeline partially deterministic  
 
 ---
 
@@ -103,20 +124,22 @@ Main loop:
 ```
 fetch job
 set status = running
-execute steps
+execute pipeline
 store result
 set status = completed
 ```
 
 Responsibilities:
 
-* orchestration
-* step tracking
-* error handling
+- orchestration  
+- step tracking  
+- error handling  
 
 ---
 
 ## Step Model
+
+Each step:
 
 ```json
 {
@@ -129,9 +152,9 @@ Responsibilities:
 
 Used for:
 
-* UI visualization
-* latency analysis
-* debugging
+- UI (architecture view)  
+- Gantt timeline  
+- latency analysis  
 
 ---
 
@@ -141,9 +164,9 @@ Provider: Scaleway Generative APIs
 
 Design rules:
 
-* short prompts
-* limited context
-* structured output
+- short prompts  
+- limited context  
+- structured output  
 
 Example constraints:
 
@@ -154,24 +177,27 @@ short descriptions
 
 ---
 
-## External Integrations
+## External APIs
 
-* Open-Meteo (geocoding + weather)
-* Overpass API (POI discovery)
-* Wikipedia (context)
+- Open-Meteo (geocoding + weather)  
+- Overpass API (POI discovery)  
+- Wikipedia (context)  
 
 Failure handling:
 
-* partial results allowed
-* non-critical steps do not fail job
+- partial results allowed  
+- non-critical steps do not fail job  
 
 ---
 
 ## Observability
 
-* step status
-* step duration
-* execution timeline (UI)
+Available in UI:
+
+- step status  
+- step duration  
+- execution timeline (Gantt)  
+- architecture view (live)  
 
 ---
 
@@ -190,25 +216,15 @@ python worker.py
 streamlit run ui/app.py
 ```
 
+---
+
 ## Access
 
-Local development:
+Local:
+- http://localhost:8501
 
-* UI: [http://localhost:8501](http://localhost:8501)
-
-Deployed environment (Scaleway Load Balancer):
-
-* UI: https://<load-balancer-endpoint>
-
-Example query:
-
-```text
-Plan a 2-day food trip in Paris
-```
-
-Plan a 2-day food trip in Paris
-
-````
+Deployed (Scaleway Load Balancer):
+- https://<load-balancer-endpoint>
 
 ---
 
@@ -227,40 +243,40 @@ flowchart TD
 
     Worker --> GenAI[Scaleway Generative API]
     Worker --> External[External APIs]
-````
+```
 
 ---
 
 ## Scaleway Services
 
-* Kapsule (Kubernetes)
-* Managed Redis
-* Generative APIs
-* Container Registry
+- Kapsule (Kubernetes)  
+- Managed Redis  
+- Generative APIs  
+- Container Registry  
 
 ---
 
 ## Limitations
 
-* single worker
-* Redis used as queue
-* no retry / DLQ
+- single worker  
+- Redis used as queue  
+- no retry / DLQ  
 
 ---
 
 ## Trade-offs
 
-* Redis as queue (simple, limited scaling)
-* polling instead of push (simpler frontend)
-* single worker (no horizontal scaling yet)
+- Redis as queue (simple, limited scaling)  
+- polling instead of push (simpler frontend)  
+- single worker (no horizontal scaling yet)  
 
 ---
 
 ## Roadmap
 
-* introduce Scaleway Queues
-* multi-worker scaling
-* caching (POI / geocode)
+- introduce Scaleway Queues  
+- multi-worker scaling  
+- caching (POI / geocode)  
 
 ---
 
@@ -268,5 +284,5 @@ flowchart TD
 
 Stateful async agent system.
 
-LLM handles planning.
+LLM handles planning.  
 Backend handles orchestration and state.
