@@ -44,7 +44,7 @@ Execution is non-blocking:
 
 ---
 
-## Execution Model
+## Execution model
 
 ```mermaid
 flowchart LR
@@ -66,7 +66,7 @@ Flow:
 
 ---
 
-## Agent Pipeline
+## Agent pipeline
 
 ```
 parse → plan → enrich → map → guide
@@ -97,7 +97,7 @@ Notes:
 
 ---
 
-## Job Model
+## Job model
 
 States:
 
@@ -137,7 +137,7 @@ Responsibilities:
 
 ---
 
-## Step Model
+## Step model
 
 Each step:
 
@@ -158,7 +158,7 @@ Used for:
 
 ---
 
-## LLM Integration
+## LLM integration
 
 Provider: Scaleway Generative APIs
 
@@ -177,7 +177,7 @@ short descriptions
 
 ---
 
-## External APIs
+## External aPIs
 
 - Open-Meteo (geocoding + weather)  
 - Overpass API (POI discovery)  
@@ -201,7 +201,7 @@ Available in UI:
 
 ---
 
-## Quick Demo
+## Quick demo
 
 Run locally:
 
@@ -247,7 +247,7 @@ flowchart TD
 
 ---
 
-## Scaleway Services
+## Scaleway services
 
 - Kapsule (Kubernetes)  
 - Managed Redis  
