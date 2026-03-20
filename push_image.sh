@@ -20,3 +20,13 @@ docker buildx build --platform linux/amd64 -t rg.fr-par.scw.cloud/travel-agent/p
 kubectl rollout restart deployment/travel-worker -n assistant
 kubectl rollout status deployment/travel-worker -n assistant
 kubectl logs deployment/travel-worker -n assistant --tail=100
+
+source /Users/jwang/jwangscw/personal_assistant/venv/bin/activate
+kubectl -n assistant port-forward svc/travel-agent 8000:80     
+curl -X POST "http://localhost:8000/plan-trip" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Plan a 2-day trip in Paris with my family",
+    "session_id": "test-session-1"
+  }'
+curl "http://localhost:8000/jobs/c0edfb6c-64ce-4a16-b329-8ec379a8f64c" 

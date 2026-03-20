@@ -1,10 +1,9 @@
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
 from agent.parser import parse_user_request
 from providers.geocode import geocode_city
-# from providers.poi_provider import fetch_attractions, fetch_restaurants
 from providers.weather import fetch_weather
-# from agent.planner import build_candidate_pool
 from llm.llm import format_itinerary_with_llm, generate_itinerary_with_llm
 from utils.map import generate_map_html
 from storage.memory import (
@@ -18,6 +17,61 @@ from storage.memory import (
 
 
 app = FastAPI()
+
+
+ARCH_STEP_ORDER = [
+    "ui",
+    "api",
+    "redis",
+    "worker",
+    "parser_llm",
+    "itinerary_llm",
+    "geocode",
+    "map",
+]
+
+ARCH_STEP_LABELS = {
+    "ui": "UI",
+    "api": "FastAPI",
+    "redis": "Redis",
+    "worker": "Worker",
+    "parser_llm": "Parser LLM",
+    "itinerary_llm": "Itinerary LLM",
+    "geocode": "Geocode",
+    "map": "Map Render",
+}
+
+
+def build_initial_arch_steps() -> list[dict]:
+    steps = []
+
+    for step_id in ARCH_STEP_ORDER:
+        status = "pending"
+        if step_id in ["ui", "api", "redis"]:
+            status = "done"
+
+        steps.append(
+            {
+                "id": step_id,
+                "label": ARCH_STEP_LABELS[step_id],
+                "status": status,
+                "started_at": None,
+                "ended_at": None,
+                "duration_s": 0.0,
+            }
+        )
+
+    return steps
+
+
+class PlanTripRequest(BaseModel):
+    query: str = Field(..., min_length=1)
+    session_id: str | None = None
+
+
+class RefineTripRequest(BaseModel):
+    session_id: str = Field(..., min_length=1)
+    instruction: str = Field(..., min_length=1)
 
 
 def _build_fallback_itinerary(city_info: dict, duration_days: int, interests: list[str]) -> dict:
@@ -46,6 +100,7 @@ def _build_fallback_itinerary(city_info: dict, duration_days: int, interests: li
 
     return plan
 
+
 def _enrich_itinerary_with_coordinates(itinerary: dict, city_name: str) -> dict:
     from providers.geocode import geocode_place
 
@@ -71,28 +126,6 @@ def _enrich_itinerary_with_coordinates(itinerary: dict, city_name: str) -> dict:
 
     return enriched
 
-# def _build_itinerary_from_candidates(
-#     candidate_pool: dict,
-#     duration_days: int,
-# ) -> dict:
-#     itinerary = {}
-#     combined = candidate_pool.get("restaurants", []) + candidate_pool.get("attractions", [])
-
-#     index = 0
-#     stops_per_day = 4
-
-#     for day in range(1, duration_days + 1):
-#         day_items = []
-#         for _ in range(stops_per_day):
-#             if index < len(combined):
-#                 day_items.append(combined[index])
-#                 index += 1
-
-#         if day_items:
-#             itinerary[f"Day {day}"] = day_items
-
-#     return itinerary
-
 
 def travel_agent_v2(user_query: str, session_preferences: dict | None = None):
     trace = ["Step 0 → analysing user request"]
@@ -112,27 +145,9 @@ def travel_agent_v2(user_query: str, session_preferences: dict | None = None):
     city_info = geocode_city(parsed["city"])
     trace.append("Step 2 → geocoded destination")
 
-    # try:
-    #     attractions = fetch_attractions(city_info["latitude"], city_info["longitude"])
-    #     trace.append(f"Step 3 → fetched attractions ({len(attractions)})")
-    # except Exception as e:
-    #     print(f"fetch_attractions failed: {e}")
-    #     attractions = []
-    #     trace.append("Step 3 → attractions provider failed, using fallback")
-
-    # try:
-    #     restaurants = fetch_restaurants(
-    #         city_info["latitude"],
-    #         city_info["longitude"],
-    #         parsed["interests"],
-    #     )
-    #     trace.append(f"Step 4 → fetched restaurants ({len(restaurants)})")
-    # except Exception as e:
-    #     print(f"fetch_restaurants failed: {e}")
-    #     restaurants = []
-    #     trace.append("Step 4 → restaurants provider failed, using fallback")
     trace.append("Step 3 → skipped external attractions provider")
     trace.append("Step 4 → skipped external restaurants provider")
+
     try:
         weather = fetch_weather(
             city_info["latitude"],
@@ -145,43 +160,6 @@ def travel_agent_v2(user_query: str, session_preferences: dict | None = None):
         weather = {"daily": []}
         trace.append("Step 5 → weather provider failed")
 
-    # try:
-    #     if not attractions and not restaurants:
-    #         itinerary = _build_fallback_itinerary(
-    #             city_info=city_info,
-    #             duration_days=parsed["duration_days"],
-    #             interests=parsed["interests"],
-    #         )
-    #         trace.append("Step 6 → built fallback itinerary")
-    #     else:
-    #         candidate_pool = build_candidate_pool(
-    #             attractions=attractions,
-    #             restaurants=restaurants,
-    #             trip_style=parsed["trip_style"],
-    #         )
-
-    #         itinerary = _build_itinerary_from_candidates(
-    #             candidate_pool=candidate_pool,
-    #             duration_days=parsed["duration_days"],
-    #         )
-
-    #         if not itinerary:
-    #             itinerary = _build_fallback_itinerary(
-    #                 city_info=city_info,
-    #                 duration_days=parsed["duration_days"],
-    #                 interests=parsed["interests"],
-    #             )
-    #             trace.append("Step 6 → candidate pool empty, fallback used")
-    #         else:
-    #             trace.append("Step 6 → built itinerary from candidate pool")
-    # except Exception as e:
-    #     print(f"candidate pool build failed: {e}")
-    #     itinerary = _build_fallback_itinerary(
-    #         city_info=city_info,
-    #         duration_days=parsed["duration_days"],
-    #         interests=parsed["interests"],
-    #     )
-    #     trace.append("Step 6 → candidate pool failed, fallback itinerary used")
     try:
         itinerary = generate_itinerary_with_llm(
             city=city_info["name"],
@@ -242,9 +220,11 @@ def travel_agent_v2(user_query: str, session_preferences: dict | None = None):
         "trace": trace,
     }
 
+
 @app.get("/")
 def health():
     return {"status": "ok"}
+
 
 @app.get("/redis-test")
 def redis_test():
@@ -256,21 +236,62 @@ def redis_test():
 
     return {"redis": value}
 
+
 @app.post("/plan-trip")
-def plan_trip_async(query: str, session_id: str | None = None):
+def plan_trip_async(request: PlanTripRequest):
     try:
-        effective_session_id = session_id or "anonymous"
-        job_id = create_job({
-            "query": query,
-            "session_id": effective_session_id,
-        })
+        effective_session_id = request.session_id or "anonymous"
+        job_id = create_job(
+            {
+                "type": "plan_trip",
+                "query": request.query,
+                "session_id": effective_session_id,
+                "status": "pending",
+                "current_step": "redis",
+                "steps": build_initial_arch_steps(),
+            }
+        )
         return {
             "job_id": job_id,
             "status": "pending",
             "session_id": effective_session_id,
+            "job_type": "plan_trip",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/refine-trip")
+def refine_trip_async(request: RefineTripRequest):
+    try:
+        if request.session_id == "anonymous":
+            raise HTTPException(
+                status_code=400,
+                detail="refine-trip requires a non-anonymous session_id",
+            )
+
+        job_id = create_job(
+            {
+                "type": "refine_trip",
+                "session_id": request.session_id,
+                "instruction": request.instruction,
+                "status": "pending",
+                "current_step": "redis",
+                "steps": build_initial_arch_steps(),
+            }
+        )
+
+        return {
+            "job_id": job_id,
+            "status": "pending",
+            "session_id": request.session_id,
+            "job_type": "refine_trip",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/sessions/{session_id}/preferences")
 def set_session_preferences(session_id: str, preferences: dict):
@@ -294,6 +315,7 @@ def read_session_preferences(session_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/jobs/{job_id}")
 def get_job_status(job_id: str):
     job = get_job(job_id)
@@ -302,6 +324,7 @@ def get_job_status(job_id: str):
         raise HTTPException(status_code=404, detail="Job not found")
 
     return job
+
 
 @app.get("/plan-trip")
 def plan_trip(query: str):

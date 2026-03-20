@@ -22,11 +22,13 @@ spec:
             - name: SCW_SECRET_KEY
               value: "REPLACE_ME"
             - name: SCW_MODEL
-              value: "llama-3.1-8b-instruct"
+              value: "gpt-oss-120b"
             - name: SCW_EMBEDDING_MODEL
               value: "bge-multilingual-gemma2"
             - name: REDIS_HOST
               value: ""
+            - name: SCW_PROJECT_ID
+              value: "REPLACE_ME"
             - name: REDIS_PORT
               value: "6379"
             - name: REDIS_PASSWORD

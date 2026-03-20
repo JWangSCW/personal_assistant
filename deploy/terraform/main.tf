@@ -154,10 +154,14 @@ resource "kubernetes_deployment" "travel_agent" {
             name  = "SCW_SECRET_KEY"
             value = var.secret_key
           }
+          env {
+            name  = "SCW_PROJECT_ID"
+            value = var.project_id
+          }
 
           env {
             name  = "SCW_MODEL"
-            value = "llama-3.1-8b-instruct"
+            value = "gpt-oss-120b"
           }
 
           env {
@@ -462,10 +466,14 @@ resource "kubernetes_deployment" "travel_worker" {
             name  = "SCW_SECRET_KEY"
             value = var.secret_key
           }
+          env {
+            name  = "SCW_PROJECT_ID"
+            value = var.project_id
+          }
 
           env {
             name  = "SCW_MODEL"
-            value = "llama-3.1-8b-instruct"
+            value = "gpt-oss-120b"
           }
 
           env {

@@ -16,8 +16,23 @@ REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 REDIS_TLS = os.getenv("REDIS_TLS", "false").lower() == "true"
 REDIS_CA_CERT = os.getenv("REDIS_CA_CERT", "")
 
+SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "604800"))  # 7 days
+JOB_TTL_SECONDS = int(os.getenv("JOB_TTL_SECONDS", "3600"))  # 1 hour
+TRIP_CACHE_TTL_SECONDS = int(os.getenv("TRIP_CACHE_TTL_SECONDS", "3600"))  # 1 hour
+LLM_CACHE_TTL_SECONDS = int(os.getenv("LLM_CACHE_TTL_SECONDS", "3600"))  # 1 hour
+
 redis_client = None
 REDIS_AVAILABLE = False
+
+
+def _safe_json_loads(data, default):
+    if not data:
+        return default
+
+    try:
+        return json.loads(data)
+    except (json.JSONDecodeError, TypeError):
+        return default
 
 
 def _build_redis_client():
@@ -55,6 +70,10 @@ if REDIS_HOST:
         REDIS_AVAILABLE = False
 
 
+# =========================
+# LLM + Trip Cache
+# =========================
+
 def save_trip(city, itinerary):
     if not REDIS_AVAILABLE:
         return
@@ -62,7 +81,7 @@ def save_trip(city, itinerary):
     redis_client.set(
         f"trip:{city.lower()}",
         json.dumps(itinerary),
-        ex=3600
+        ex=TRIP_CACHE_TTL_SECONDS,
     )
 
 
@@ -71,19 +90,17 @@ def load_trip(city):
         return None
 
     data = redis_client.get(f"trip:{city.lower()}")
-    if data:
-        return json.loads(data)
-    return None
+    return _safe_json_loads(data, None)
 
 
-def cache_llm_response(key, value, ttl=3600):
+def cache_llm_response(key, value, ttl=LLM_CACHE_TTL_SECONDS):
     if not REDIS_AVAILABLE:
         return
 
     redis_client.set(
         f"llm:{key}",
         json.dumps(value),
-        ex=ttl
+        ex=ttl,
     )
 
 
@@ -92,9 +109,12 @@ def get_llm_cache(key):
         return None
 
     data = redis_client.get(f"llm:{key}")
-    if data:
-        return json.loads(data)
-    return None
+    return _safe_json_loads(data, None)
+
+
+# =========================
+# JOB SYSTEM (核心修改点)
+# =========================
 
 def create_job(payload: dict) -> str:
     if not REDIS_AVAILABLE:
@@ -104,14 +124,17 @@ def create_job(payload: dict) -> str:
     job_key = f"job:{job_id}"
 
     job_data = {
-        "status": "pending",
+        "status": payload.get("status", "pending"),
         "created_at": datetime.utcnow().isoformat(),
         "payload": payload,
         "result": None,
         "error": None,
+        "current_step": payload.get("current_step"),
+        "steps": payload.get("steps", []),
+        "session_id": payload.get("session_id"),
     }
 
-    redis_client.set(job_key, json.dumps(job_data), ex=3600)
+    redis_client.set(job_key, json.dumps(job_data), ex=JOB_TTL_SECONDS)
     return job_id
 
 
@@ -122,7 +145,8 @@ def get_job(job_id: str):
     data = redis_client.get(f"job:{job_id}")
     if not data:
         return None
-    return json.loads(data)
+
+    return _safe_json_loads(data, None)
 
 
 def update_job(job_id: str, **fields):
@@ -135,17 +159,26 @@ def update_job(job_id: str, **fields):
     if not existing:
         return None
 
-    job_data = json.loads(existing)
+    job_data = _safe_json_loads(existing, None)
+    if not job_data:
+        return None
+
     job_data.update(fields)
 
-    redis_client.set(job_key, json.dumps(job_data), ex=3600)
+    redis_client.set(job_key, json.dumps(job_data), ex=JOB_TTL_SECONDS)
     return job_data
 
-SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "604800"))  # 7 days
 
+# =========================
+# SESSION MANAGEMENT
+# =========================
 
 def _session_preferences_key(session_id: str) -> str:
     return f"session:{session_id}:preferences"
+
+
+def _session_trip_result_key(session_id: str) -> str:
+    return f"session:{session_id}:trip_result"
 
 
 def get_session_preferences(session_id: str) -> dict:
@@ -153,13 +186,7 @@ def get_session_preferences(session_id: str) -> dict:
         return {}
 
     data = redis_client.get(_session_preferences_key(session_id))
-    if not data:
-        return {}
-
-    try:
-        return json.loads(data)
-    except json.JSONDecodeError:
-        return {}
+    return _safe_json_loads(data, {})
 
 
 def save_session_preferences(session_id: str, preferences: dict):
@@ -169,7 +196,7 @@ def save_session_preferences(session_id: str, preferences: dict):
     redis_client.set(
         _session_preferences_key(session_id),
         json.dumps(preferences),
-        ex=SESSION_TTL_SECONDS
+        ex=SESSION_TTL_SECONDS,
     )
 
 
@@ -183,6 +210,32 @@ def merge_session_preferences(session_id: str, new_preferences: dict) -> dict:
     redis_client.set(
         _session_preferences_key(session_id),
         json.dumps(merged),
-        ex=SESSION_TTL_SECONDS
+        ex=SESSION_TTL_SECONDS,
     )
     return merged
+
+
+def save_session_trip_result(session_id: str, result: dict):
+    if not REDIS_AVAILABLE:
+        raise RuntimeError("Redis unavailable")
+
+    redis_client.set(
+        _session_trip_result_key(session_id),
+        json.dumps(result),
+        ex=SESSION_TTL_SECONDS,
+    )
+
+
+def get_session_trip_result(session_id: str) -> dict | None:
+    if not REDIS_AVAILABLE:
+        return None
+
+    data = redis_client.get(_session_trip_result_key(session_id))
+    return _safe_json_loads(data, None)
+
+
+def clear_session_trip_result(session_id: str):
+    if not REDIS_AVAILABLE:
+        raise RuntimeError("Redis unavailable")
+
+    redis_client.delete(_session_trip_result_key(session_id))

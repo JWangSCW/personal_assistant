@@ -193,7 +193,7 @@ pip install -r requirements.txt
 Create a `.env` file:
 
     SCW_SECRET_KEY=your_scaleway_secret_key
-    SCW_MODEL=llama-3.1-8b-instruct
+    SCW_MODEL=gpt-oss-120b
     SCW_EMBEDDING_MODEL=bge-multilingual-gemma2
 
     REDIS_HOST=

@@ -6,8 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SCW_SECRET_KEY = os.getenv("SCW_SECRET_KEY")
+SCW_PROJECT_ID = os.getenv("SCW_PROJECT_ID")
 SCW_EMBEDDING_MODEL = os.getenv("SCW_EMBEDDING_MODEL", "bge-multilingual-gemma2")
-SCW_EMBEDDING_API_URL = "https://api.scaleway.ai/v1/embeddings"
+SCW_EMBEDDING_API_URL = f"https://api.scaleway.ai/{SCW_PROJECT_ID}/v1/embeddings"
 
 documents = []
 vectors = []

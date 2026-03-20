@@ -6,8 +6,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SCW_SECRET_KEY = os.getenv("SCW_SECRET_KEY")
-SCW_MODEL = os.getenv("SCW_MODEL", "llama-3.1-8b-instruct")
-SCW_API_URL = "https://api.scaleway.ai/v1/chat/completions"
+SCW_MODEL = os.getenv("SCW_MODEL", "gpt-oss-120b")
+SCW_PROJECT_ID = os.getenv("SCW_PROJECT_ID")
+
+SCW_API_URL = f"https://api.scaleway.ai/{SCW_PROJECT_ID}/v1/chat/completions"
 
 
 def detect_keywords(user_prompt: str) -> dict:
